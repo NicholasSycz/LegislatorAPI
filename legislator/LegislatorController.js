@@ -11,11 +11,32 @@ router.use(bp.json());
 
 // GET function to return all data from the database
 router.get('/', (req, res) => {
-    Legislator.find({}, (err, leg) => {
+    let pageNum = parseInt(req.query.pageNum);
+    let size = parseInt(req.query.size);
+    let query = {};
+
+    if (pageNum === 0 || pageNum < 0) {
+        return res.json({ 'error': true, 'message': 'invalid page number.' });
+    }
+
+    query.skip = size * (pageNum - 1);
+    query.limit = size;
+
+    Legislator.count({}, (err, count) => {
         if (err) {
-            return res.status(400).send('ERROR occured while accessing the legislators from the database.');
+            return res.status(500).send('ERROR occured while accessing the legislator from the database.');
         }
-        res.status(200).send(leg);
+
+        Legislator.find({}, {}, query, (err, leg) => {
+            if(err) {
+                return res.status(500).send('ERROR occured while accessing the legislators');
+            }
+            if(!leg) {
+                return res.status(404).send('No Legislator Found');
+            }
+            let total = Math.ceil(count / size);
+            return res.status(200).json({"error":false, "message": leg, "pages": total});
+        });
     });
 });
 
@@ -88,4 +109,15 @@ router.put('/:id', (req, res) => {
         res.status(200).send(leg);
     });
 });
+
+// PAGINATION 
+const pagination = () => {
+    Legislator.find({
+        createdOn: {
+            $lte: request.createdOnBefore
+        }
+    })
+        .limit(10)
+        .sort('-createdOn')
+}
 module.exports = router;
