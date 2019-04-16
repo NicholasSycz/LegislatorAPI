@@ -109,15 +109,4 @@ router.put('/:id', (req, res) => {
         res.status(200).send(leg);
     });
 });
-
-// PAGINATION 
-const pagination = () => {
-    Legislator.find({
-        createdOn: {
-            $lte: request.createdOnBefore
-        }
-    })
-        .limit(10)
-        .sort('-createdOn')
-}
 module.exports = router;
